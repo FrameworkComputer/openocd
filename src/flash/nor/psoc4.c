@@ -139,6 +139,8 @@ static const struct psoc4_chip_family psoc4_families[] = {
 	{ 0xAA, "PSoC/PRoC BLE (11AA)",    .flags = 0 },
 	{ 0xAB, "PSoC4100S",               .flags = 0 },
 	{ 0xAC, "PSoC Analog Coprocessor", .flags = 0 },
+	{ 0xC5, "PMG1-S3/CCG8",            .flags = 0 },
+	{ 0xCE, "CCG6DF/CCG8DF (CFP)",     .flags = 0 },
 	{ 0,    "Unknown",                 .flags = 0 }
 };
 
