@@ -43,6 +43,8 @@ static struct {
 	size_t sink_list_length;
 
 	unsigned int polling_interval;
+	/** Whether the last read failed (e.g. target was resetting). */
+	bool read_failing;
 } rtt;
 
 int rtt_init(void)
@@ -73,14 +75,27 @@ static int read_channel_callback(void *user_data)
 {
 	int ret;
 
+	/*
+	 * A target reset makes reads fail until the debug port is back and the
+	 * target was re-examined. Skip polling meanwhile instead of stopping
+	 * RTT for good, so output resumes after the target comes back.
+	 */
+	if (!target_was_examined(rtt.target))
+		return ERROR_OK;
+
 	ret = rtt.source.read(rtt.target, &rtt.ctrl, rtt.sink_list,
 		rtt.sink_list_length, NULL);
 
 	if (ret != ERROR_OK) {
-		target_unregister_timer_callback(&read_channel_callback, NULL);
-		rtt.source.stop(rtt.target, NULL);
-		return ret;
+		if (!rtt.read_failing)
+			LOG_WARNING("rtt: Read failed, will keep polling");
+		rtt.read_failing = true;
+		return ERROR_OK;
 	}
+
+	if (rtt.read_failing)
+		LOG_INFO("rtt: Reading again");
+	rtt.read_failing = false;
 
 	return ERROR_OK;
 }
